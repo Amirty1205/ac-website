@@ -4,7 +4,7 @@ export default function Services() {
     return (
         <section className="px-4 sm:px-8 lg:px-28 mt-16 sm:mt-24 md:mt-48">
             <div className="max-w-7xl mx-auto space-y-8">
-                <h2 className="text-3xl text-center mb-8 md:mb-16">خدمات ما</h2>
+                <h2 className="text-3xl font-medium text-center mb-8 md:mb-16">خدمات ما</h2>
 
                 {/* Service 1: Text + Image */}
                 <div className="grid md:grid-cols-[1fr_1.2fr] gap-6 md:gap-20 items-center mb-16 md:mb-40">

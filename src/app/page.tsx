@@ -1,6 +1,7 @@
 import Hero from "../components/sections/Hero"
 import Services from "../components/sections/Services";
-import Products from "@/components/sections/Products";
+import Products from "../components/sections/Products";
+import Blog from "../components/sections/Blog";
 
 export default function Home() {
   return (
@@ -8,6 +9,7 @@ export default function Home() {
       <Hero />
       <Services />
       <Products />
+      <Blog />
     </div>
   );
 }
