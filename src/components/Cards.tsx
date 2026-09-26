@@ -1,6 +1,8 @@
-import {AddToCart} from './AddToCart'
+import { AddToCart } from './AddToCart'
 import Image from "next/image";
 import Link from "next/link";
+
+const toFa = (num: number) => num.toLocaleString("fa-IR").replace(/٬/g, ",");
 
 export default function Cards({
     isProduct,
@@ -12,6 +14,9 @@ export default function Cards({
     originalPrice,
     price,
     avatar,
+    btu,
+    area,
+    coolOnly,
 }: {
     isProduct: boolean;
     imageAlt: string;
@@ -22,8 +27,16 @@ export default function Cards({
     originalPrice?: number;
     price?: number;
     rating?: number;
-    avatar? : string;
+    avatar?: string;
+    btu?: number;
+    area?: number;
+    coolOnly?: boolean;
 }) {
+    const hasDiscount = isProduct && originalPrice && price && originalPrice > price;
+    const discountPercent = hasDiscount
+        ? Math.round(((originalPrice - price) / originalPrice) * 100)
+        : 0;
+
     return (
         <div className="rounded-2xl bg-offwhite-50 overflow-hidden flex flex-col h-full">
             {/* Image Section */}
@@ -33,7 +46,13 @@ export default function Cards({
                     alt={imageAlt}
                     width={544}
                     height={408}
+                    className="w-full h-auto"
                 />
+                {hasDiscount && (
+                    <span className="absolute top-3 right-3 rounded-full bg-red-600 px-2.5 py-1 text-sm font-bold text-white">
+                        ٪{toFa(discountPercent)}
+                    </span>
+                )}
                 {!isProduct && (
                     <>
                         <div className="absolute bottom-0 w-full h-24 bg-gradient-to-t from-offwhite-100/50 from-0% to-transparent to-100%" />
@@ -53,10 +72,29 @@ export default function Cards({
                 )}
             </div>
             {/* bottom section */}
-            <div className="flex flex-col flex-1 px-4 py-2">
+            <div className="flex flex-col flex-1 px-4 py-3">
                 <div className="flex-1">
-                    <h3 className={`${isProduct && 'text-2xl '}text-brand-main  font-bold`}>{cardTitle}</h3>
-                    {!isProduct && (
+                    <h3 className={`${isProduct ? 'text-base sm:text-lg line-clamp-2 ' : ''}text-brand-main font-bold`}>
+                        {cardTitle}
+                    </h3>
+
+                    {isProduct ? (
+                        <div className="mt-3 flex flex-wrap gap-1.5 sm:gap-2">
+                            {area != null && (
+                                <span className="rounded-lg bg-offwhite-100 px-2 py-1 text-xs sm:text-sm text-brand-main">
+                                    مناسب برای {toFa(area)} متر
+                                </span>
+                            )}
+                            {btu != null && (
+                                <span className="rounded-lg bg-offwhite-100 px-2 py-1 text-xs sm:text-sm text-gray-600">
+                                    {toFa(btu)} BTU
+                                </span>
+                            )}
+                            <span className="rounded-lg bg-offwhite-100 px-2 py-1 text-xs sm:text-sm text-gray-600">
+                                {coolOnly ? "سرد" : "سرد و گرم"}
+                            </span>
+                        </div>
+                    ) : (
                         <>
                             <p className="text-gray-500">{cardDesc}</p>
                             <Link
@@ -70,14 +108,16 @@ export default function Cards({
                 </div>
 
                 {isProduct && (
-                    <div className="flex items-center justify-between pt-4 pb-2">
+                    <div className="flex items-center justify-between pt-4 pb-1">
                         <AddToCart />
                         <div className="flex flex-col items-end">
-                            {originalPrice && (<p className="text-gray-500 line-through text-lg">
-                                {originalPrice.toLocaleString("fa-IR").replace(/٬/g, ",")} ریال
-                            </p>)}
-                            <p className="text-brand-main font-bold text-lg">
-                                {price?.toLocaleString("fa-IR").replace(/٬/g, ",")} ریال
+                            {originalPrice && (
+                                <p className="text-gray-500 line-through text-sm sm:text-base">
+                                    {toFa(originalPrice)} ریال
+                                </p>
+                            )}
+                            <p className="text-brand-main font-bold text-base sm:text-lg">
+                                {price != null ? toFa(price) : ""} ریال
                             </p>
                         </div>
                     </div>
