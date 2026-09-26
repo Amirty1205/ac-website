@@ -5,30 +5,6 @@ import Cards
 
 export default function ProductsPage() {
 
-    const productِypes = [
-        "Ac", "WaterFilteration", "Radiator"
-    ]
-    const dummy = [
-        {
-            id: '1',
-            isProduct: true,
-            title: "کولر گازی اسپلیت دیواری 12000 اینورتر هایسنس مدل QAS-12UW",
-            images: [
-                "/images/split.webp", "/images/AC.webp"
-            ],
-            Price: 77000000,
-            originalPrice: 85000000,
-            rating: '3.5',
-            type: 'wall-split',
-            efficiency: 'A++',
-            inverter: true,
-            climate: 'T1',
-            power: 1100,
-            capacity: 12000,
-            desc: ""
-        }
-    ]
-
     const dummyProducts = [
         {
             id: '1',
