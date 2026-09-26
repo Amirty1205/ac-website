@@ -60,7 +60,7 @@ export default function Blog() {
             <div>
                 <h2 className="text-3xl font-medium text-center mb-5 md:mb-13">مجله داراب</h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                 {
                     dummyBlogs.map((blog) => (
                         <Cards
