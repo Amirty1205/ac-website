@@ -38,43 +38,26 @@ export default function Cards({
         : 0;
 
     return (
-        <div className="rounded-2xl bg-offwhite-50 overflow-hidden flex flex-col h-full">
+        <div className="group rounded-2xl bg-offwhite-50 overflow-hidden flex flex-col h-full ring-1 ring-black/5 transition-shadow duration-300 hover:shadow-lg hover:shadow-black/5">
             {/* Image Section */}
-            <div className="relative shrink-0">
+            <div className="relative shrink-0 overflow-hidden">
                 <Image
                     src="/images/544x408.svg"
                     alt={imageAlt}
                     width={544}
                     height={408}
-                    className="w-full h-auto"
+                    className="w-full h-auto transition-transform duration-500 group-hover:scale-105"
                 />
                 {hasDiscount && (
                     <span className="absolute top-3 right-3 rounded-full bg-red-600 px-2.5 py-1 text-sm font-bold text-white">
                         ٪{toFa(discountPercent)}
                     </span>
                 )}
-                {!isProduct && (
-                    <>
-                        <div className="absolute bottom-0 w-full h-24 bg-gradient-to-t from-offwhite-100/50 from-0% to-transparent to-100%" />
-                        <div className="absolute bottom-3 right-3 w-11 h-11">
-                            <Image
-                                src={avatar || ""}
-                                alt={userName || ""}
-                                fill
-                                className="rounded-full object-cover bg-amber-500"
-                            />
-                        </div>
-                        <div className="absolute text-gray-500 text-base bottom-2 right-16">
-                            <p>{postDate?.toLocaleDateString("fa-IR")}</p>
-                            <p>{userName}</p>
-                        </div>
-                    </>
-                )}
             </div>
             {/* bottom section */}
             <div className="flex flex-col flex-1 px-4 py-3">
                 <div className="flex-1">
-                    <h3 className={`${isProduct ? 'text-base sm:text-lg line-clamp-2 min-h-[3rem] sm:min-h-[3.5rem] ' : ''}text-brand-main font-bold`}>
+                    <h3 className={`text-brand-main font-bold ${isProduct ? 'text-base sm:text-lg line-clamp-2 min-h-[3rem] sm:min-h-[3.5rem]' : 'text-lg line-clamp-2 min-h-[3.5rem]'}`}>
                         {cardTitle}
                     </h3>
 
@@ -95,17 +78,36 @@ export default function Cards({
                             </span>
                         </div>
                     ) : (
-                        <>
-                            <p className="text-gray-500">{cardDesc}</p>
-                            <Link
-                                className="text-blue-600 hover:text-blue-800 visited:text-purple-600 underline"
-                                href="/"
-                            >
-                                بیشتر بخوانید...
-                            </Link>
-                        </>
+                        <p className="mt-2 text-gray-500 text-sm leading-7 line-clamp-3 min-h-[5.25rem]">
+                            {cardDesc}
+                        </p>
                     )}
                 </div>
+
+                {!isProduct && (
+                    <div className="mt-4 flex items-center justify-between gap-2 border-t border-black/5 pt-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <div className="relative w-9 h-9 shrink-0">
+                                <Image
+                                    src={avatar || ""}
+                                    alt={userName || ""}
+                                    fill
+                                    className="rounded-full object-cover bg-amber-500"
+                                />
+                            </div>
+                            <div className="min-w-0 leading-tight">
+                                <p className="text-sm font-medium text-brand-main truncate">{userName}</p>
+                                <p className="text-xs text-gray-500">{postDate?.toLocaleDateString("fa-IR")}</p>
+                            </div>
+                        </div>
+                        <Link
+                            className="shrink-0 rounded-lg bg-offwhite-100 px-3 py-1.5 text-sm font-medium text-brand-main transition-colors hover:bg-brand-main hover:text-white"
+                            href="/"
+                        >
+                            بیشتر بخوانید
+                        </Link>
+                    </div>
+                )}
 
                 {isProduct && (
                     <div className="mt-4 flex items-end justify-between gap-2 pb-1">
