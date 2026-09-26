@@ -74,12 +74,12 @@ export default function Cards({
             {/* bottom section */}
             <div className="flex flex-col flex-1 px-4 py-3">
                 <div className="flex-1">
-                    <h3 className={`${isProduct ? 'text-base sm:text-lg line-clamp-2 ' : ''}text-brand-main font-bold`}>
+                    <h3 className={`${isProduct ? 'text-base sm:text-lg line-clamp-2 min-h-[3rem] sm:min-h-[3.5rem] ' : ''}text-brand-main font-bold`}>
                         {cardTitle}
                     </h3>
 
                     {isProduct ? (
-                        <div className="mt-3 flex flex-wrap gap-1.5 sm:gap-2">
+                        <div className="mt-3 flex flex-wrap content-start gap-1.5 sm:gap-2 min-h-[4.25rem] sm:min-h-[4.75rem]">
                             {area != null && (
                                 <span className="rounded-lg bg-offwhite-100 px-2 py-1 text-xs sm:text-sm text-brand-main">
                                     مناسب برای {toFa(area)} متر
@@ -108,15 +108,13 @@ export default function Cards({
                 </div>
 
                 {isProduct && (
-                    <div className="flex items-center justify-between pt-4 pb-1">
+                    <div className="mt-4 flex items-end justify-between gap-2 pb-1">
                         <AddToCart />
-                        <div className="flex flex-col items-end">
-                            {originalPrice && (
-                                <p className="text-gray-500 line-through text-sm sm:text-base">
-                                    {toFa(originalPrice)} ریال
-                                </p>
-                            )}
-                            <p className="text-brand-main font-bold text-base sm:text-lg">
+                        <div className="flex min-w-0 flex-col items-end">
+                            <p className={`line-through text-xs sm:text-sm ${originalPrice ? "text-gray-500" : "invisible"}`}>
+                                {toFa(originalPrice ?? price ?? 0)} ریال
+                            </p>
+                            <p className="text-brand-main font-bold text-sm sm:text-base whitespace-nowrap">
                                 {price != null ? toFa(price) : ""} ریال
                             </p>
                         </div>

@@ -17,17 +17,19 @@ export default function Products() {
             <Swiper
                 modules={[Navigation, Pagination, Autoplay]}
                 spaceBetween={16}
-                slidesPerView={1.5}
-                centeredSlides
+                slidesPerView={1.2}
                 navigation
                 pagination={{ clickable: true }}
                 autoplay={{ delay: 3000, disableOnInteraction: false }}
                 breakpoints={{
-                    640: {
-                        slidesPerView: 2.5
+                    480: {
+                        slidesPerView: 2
                     },
-                    1024: {
-                        slidesPerView: 3.5
+                    768: {
+                        slidesPerView: 3
+                    },
+                    1280: {
+                        slidesPerView: 4
                     }
                 }}
                 dir="rtl"
