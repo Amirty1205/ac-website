@@ -121,8 +121,9 @@ export default function ProductCatalog({
     [selectedCategory],
   );
 
-  const hasBoardTypeFilter = selectedCategory !== 'تصفیه آب';
-  const hasCapacityFilter = selectedCategory !== 'تصفیه آب';
+  const isWaterCategory = selectedCategory === 'تصفیه آب';
+  const hasBoardTypeFilter = !isWaterCategory;
+  const hasCapacityFilter = !isWaterCategory;
 
   const activeFilterCount =
     Number(selectedCategory !== 'کولر گازی') +
@@ -337,7 +338,7 @@ export default function ProductCatalog({
       {hasCapacityFilter && availableCapacities.length > 0 && (
         <div>
           <p className="mb-3 text-sm font-semibold text-slate-700">
-            {selectedCategory === 'تصفیه آب' ? 'ظرفیت (لیتر)' : 'ظرفیت (BTU)'}
+            {isWaterCategory ? 'ظرفیت (لیتر)' : 'ظرفیت (BTU)'}
           </p>
           <div className="flex flex-wrap gap-2">
             {availableCapacities.map((capacity) => {
