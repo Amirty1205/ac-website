@@ -103,13 +103,13 @@ export default function SmartSelectionModal({
 
   const nextStep = () => {
     setCurrentStep((previous) => {
-      const maxStep = need === 'water' ? 4 : 4;
-      return Math.min(maxStep, (previous + 1) as Step);
+      const maxStep: Step = 4;
+      return Math.min(maxStep, previous + 1) as Step;
     });
   };
 
   const previousStep = () => {
-    setCurrentStep((previous) => Math.max(1, (previous - 1) as Step));
+    setCurrentStep((previous) => Math.max(1, previous - 1) as Step);
   };
 
   const resetModal = () => {
