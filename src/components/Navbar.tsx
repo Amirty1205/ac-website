@@ -63,13 +63,13 @@ export default function Navbar() {
                                 <div className="absolute top-full right-0 pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                                     <div className="bg-offwhite-50 rounded-2xl shadow-xl py-4 px-6 w-56 space-y-3 text-sm">
                                         <Link href="/products?category=کولر+گازی" className="block hover:text-blue-600 py-1">
-                                        کولر گازی‌ها
+                                            کولر گازی
                                         </Link>
                                         <Link href="/products?category=پکیج" className="block hover:text-blue-600 py-1">
-                                        پکیج‌ها
+                                            پکیج
                                         </Link>
                                         <Link href="/products?category=تصفیه+آب" className="block hover:text-blue-600 py-1">
-                                        تصفیه آب
+                                            تصفیه آب
                                         </Link>
                                     </div>
                                 </div>
@@ -86,6 +86,7 @@ export default function Navbar() {
                             <button
                                 type="button"
                                 onClick={() => setIsSmartModalOpen(true)}
+
                                 className={`${navItemClass} text-brand-main font-bold`}
                             >
                                 انتخاب هوشمند
@@ -130,7 +131,7 @@ export default function Navbar() {
                                         <span className="text-xs text-brand-main">▼</span>
                                     </button>
                                     {isOpen === 'services' && (
-                                        <div className="bg-offwhite-100 rounded-2xl py-2 px-4 mt-2 space-y-2 text-sm">
+                                        <div className=" border-b-1 py-2 mx-[-16px] px-12 mt-2 text-sm">
                                             <Link href="/services" className="block hover:text-blue-600 py-1">All Services</Link>
                                         </div>
                                     )}
@@ -143,8 +144,15 @@ export default function Navbar() {
                                         <span className="text-xs text-brand-main">▼</span>
                                     </button>
                                     {isOpen === 'products' && (
-                                        <div className="bg-offwhite-100 rounded-2xl py-2 px-4 mt-2 space-y-2 text-sm">
-                                            <Link href="/services" className="block hover:text-blue-600 py-1">All Products</Link>
+                                        <div className=" border-b-1 py-2 mx-[-16px] px-12 mt-2 text-sm">
+                                            <Link href="/products?category=کولر+گازی" className="block hover:text-blue-600 py-1">
+                                                کولر گازی
+                                            </Link>
+                                            <Link href="/products?category=پکیج" className="block hover:text-blue-600 py-1">
+                                                پکیج                                            </Link>
+                                            <Link href="/products?category=تصفیه+آب" className="block hover:text-blue-600 py-1">
+                                                تصفیه آب
+                                            </Link>
                                         </div>
                                     )}
                                 </div>
@@ -159,7 +167,10 @@ export default function Navbar() {
 
                                 <button
                                     type="button"
-                                    onClick={() => setIsSmartModalOpen(true)}
+                                    onClick={() => {
+                                        setIsSmartModalOpen(true);
+                                        setIsMenuOpen(false);
+                                    }}
                                     className={`${navItemClass} text-brand-main font-bold`}
                                 >
                                     انتخاب هوشمند

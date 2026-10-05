@@ -22,8 +22,9 @@ export default function Services() {
 
                 {/* Service 2: Image + Text */}
                 <div className="grid md:grid-cols-[1.2fr_1fr] gap-6 md:gap-20 items-center mb-16 md:mb-40">
-                    <div className="w-full h-48 sm:h-60 md:h-80 bg-gray-200 rounded-2xl" />
-                    <div className="text-center md:text-right">
+                    <div className="w-full h-48 sm:h-60 md:h-80 bg-gray-200 rounded-2xl order-2 md:order-1" />
+
+                    <div className="text-center md:text-right order-1 md:order-2">
                         <h3 className="font-normal text-2xl sm:text-3xl">
                             سرویس و نگهداری
                         </h3>
