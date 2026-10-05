@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Cards from '@/components/Cards';
 import {
   PRODUCT_CAPACITY_BY_CATEGORY,
@@ -24,10 +25,40 @@ const boardTypeLabels: Record<ProductBoardType, string> = {
 interface ProductCatalogProps {
   initialProducts: Product[];
   initialTotal: number;
+  initialCategory?: ProductCategory;
 }
 
 function formatPrice(value: number) {
   return `${value.toLocaleString('fa-IR')} ریال`;
+}
+
+function parseListParam(value: string | null): string[] {
+  return value ? value.split(',').map((item) => item.trim()).filter(Boolean) : [];
+}
+
+function parseCategoryParam(value: string | null): ProductCategory {
+  return PRODUCT_CATEGORIES.includes(value as ProductCategory)
+    ? (value as ProductCategory)
+    : 'کولر گازی';
+}
+
+function getInitialCatalogState(params: URLSearchParams) {
+  const category = parseCategoryParam(params.get('category'));
+  const min = Number(params.get('min') ?? PRODUCT_PRICE_RANGE[category].min);
+  const max = Number(params.get('max') ?? PRODUCT_PRICE_RANGE[category].max);
+  const priceRange: [number, number] = [
+    Number.isFinite(min) ? min : PRODUCT_PRICE_RANGE[category].min,
+    Number.isFinite(max) ? max : PRODUCT_PRICE_RANGE[category].max,
+  ];
+
+  return {
+    category,
+    sort: (params.get('sort') as ProductSortMode) ?? 'default',
+    priceRange,
+    brands: parseListParam(params.get('brand')),
+    boardTypes: parseListParam(params.get('board')) as ProductBoardType[],
+    capacities: parseListParam(params.get('capacity')).map(Number).filter((item) => Number.isFinite(item)),
+  };
 }
 
 function PriceRangeSlider({
@@ -95,21 +126,102 @@ function PriceRangeSlider({
 export default function ProductCatalog({
   initialProducts,
   initialTotal,
+  initialCategory = 'کولر گازی',
 }: ProductCatalogProps) {
-  const [selectedCategory, setSelectedCategory] = useState<ProductCategory>('کولر گازی');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialCatalogState = useMemo(
+    () => getInitialCatalogState(new URLSearchParams(searchParams.toString())),
+    [searchParams],
+  );
+  const [selectedCategory, setSelectedCategory] = useState<ProductCategory>(initialCategory || initialCatalogState.category);
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [total, setTotal] = useState(initialTotal);
   const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<ProductSortMode>('default');
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [selectedBoardTypes, setSelectedBoardTypes] = useState<ProductBoardType[]>([]);
-  const [selectedCapacities, setSelectedCapacities] = useState<number[]>([]);
-  const [priceRange, setPriceRange] = useState<[number, number]>([
-    PRODUCT_PRICE_RANGE['کولر گازی'].min,
-    PRODUCT_PRICE_RANGE['کولر گازی'].max,
-  ]);
+  const [sort, setSort] = useState<ProductSortMode>(initialCatalogState.sort);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>(initialCatalogState.brands);
+  const [selectedBoardTypes, setSelectedBoardTypes] = useState<ProductBoardType[]>(initialCatalogState.boardTypes);
+  const [selectedCapacities, setSelectedCapacities] = useState<number[]>(initialCatalogState.capacities);
+  const [priceRange, setPriceRange] = useState<[number, number]>(initialCatalogState.priceRange);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [mobileSortOpen, setMobileSortOpen] = useState(false);
+
+  const syncUrl = (
+    nextCategory: ProductCategory = selectedCategory,
+    nextSort: ProductSortMode = sort,
+    nextPriceRange: [number, number] = priceRange,
+    nextBrands: string[] = selectedBrands,
+    nextBoardTypes: ProductBoardType[] = selectedBoardTypes,
+    nextCapacities: number[] = selectedCapacities,
+  ) => {
+    const params = new URLSearchParams();
+
+    params.set('category', nextCategory);
+
+    if (nextSort !== 'default') {
+      params.set('sort', nextSort);
+    }
+
+    const defaultMin = PRODUCT_PRICE_RANGE[nextCategory].min;
+    const defaultMax = PRODUCT_PRICE_RANGE[nextCategory].max;
+
+    if (nextPriceRange[0] !== defaultMin) {
+      params.set('min', String(nextPriceRange[0]));
+    }
+
+    if (nextPriceRange[1] !== defaultMax) {
+      params.set('max', String(nextPriceRange[1]));
+    }
+
+    if (nextBrands.length > 0) {
+      params.set('brand', nextBrands.join(','));
+    }
+
+    if (nextBoardTypes.length > 0) {
+      params.set('board', nextBoardTypes.join(','));
+    }
+
+    if (nextCapacities.length > 0) {
+      params.set('capacity', nextCapacities.join(','));
+    }
+
+    const queryString = params.toString();
+    const targetUrl = `${window.location.pathname}${queryString ? `?${queryString}` : ''}`;
+
+    router.replace(targetUrl, { scroll: false });
+  };
+
+  useEffect(() => {
+    const nextCatalogState = getInitialCatalogState(new URLSearchParams(searchParams.toString()));
+    const hasQueryValues = Boolean(
+      nextCatalogState.category !== 'کولر گازی' ||
+        nextCatalogState.sort !== 'default' ||
+        nextCatalogState.brands.length > 0 ||
+        nextCatalogState.boardTypes.length > 0 ||
+        nextCatalogState.capacities.length > 0 ||
+        nextCatalogState.priceRange[0] !== PRODUCT_PRICE_RANGE[nextCatalogState.category].min ||
+        nextCatalogState.priceRange[1] !== PRODUCT_PRICE_RANGE[nextCatalogState.category].max,
+    );
+
+    setSelectedCategory(nextCatalogState.category);
+    setSort(nextCatalogState.sort);
+    setSelectedBrands(nextCatalogState.brands);
+    setSelectedBoardTypes(nextCatalogState.boardTypes);
+    setSelectedCapacities(nextCatalogState.capacities);
+    setPriceRange(nextCatalogState.priceRange);
+
+    if (hasQueryValues) {
+      applyQuery(
+        nextCatalogState.category,
+        1,
+        nextCatalogState.sort,
+        nextCatalogState.priceRange,
+        nextCatalogState.brands,
+        nextCatalogState.boardTypes,
+        nextCatalogState.capacities,
+      );
+    }
+  }, [searchParams]);
 
   const availableBrands = useMemo(
     () => PRODUCT_BRANDS_BY_CATEGORY[selectedCategory],
@@ -177,6 +289,7 @@ export default function ProductCatalog({
     setSort('default');
     setMobileFilterOpen(false);
     setMobileSortOpen(false);
+    syncUrl(category, 'default', nextRange, [], [], []);
     applyQuery(category, 1, 'default', nextRange, [], [], []);
   };
 
@@ -186,6 +299,7 @@ export default function ProductCatalog({
       : [...selectedBrands, brand];
 
     setSelectedBrands(next);
+    syncUrl(selectedCategory, sort, priceRange, next, selectedBoardTypes, selectedCapacities);
     applyQuery(selectedCategory, 1, sort, priceRange, next, selectedBoardTypes, selectedCapacities);
   };
 
@@ -195,6 +309,7 @@ export default function ProductCatalog({
       : [...selectedBoardTypes, boardType];
 
     setSelectedBoardTypes(next);
+    syncUrl(selectedCategory, sort, priceRange, selectedBrands, next, selectedCapacities);
     applyQuery(selectedCategory, 1, sort, priceRange, selectedBrands, next, selectedCapacities);
   };
 
@@ -204,21 +319,25 @@ export default function ProductCatalog({
       : [...selectedCapacities, capacity];
 
     setSelectedCapacities(next);
+    syncUrl(selectedCategory, sort, priceRange, selectedBrands, selectedBoardTypes, next);
     applyQuery(selectedCategory, 1, sort, priceRange, selectedBrands, selectedBoardTypes, next);
   };
 
   const handleSortChange = (value: ProductSortMode) => {
     setSort(value);
     setMobileSortOpen(false);
+    syncUrl(selectedCategory, value, priceRange, selectedBrands, selectedBoardTypes, selectedCapacities);
     applyQuery(selectedCategory, 1, value, priceRange, selectedBrands, selectedBoardTypes, selectedCapacities);
   };
 
   const handlePageChange = (nextPage: number) => {
+    syncUrl(selectedCategory, sort, priceRange, selectedBrands, selectedBoardTypes, selectedCapacities);
     applyQuery(selectedCategory, nextPage, sort, priceRange, selectedBrands, selectedBoardTypes, selectedCapacities);
   };
 
   const handlePriceRangeChange = (nextRange: [number, number]) => {
     setPriceRange(nextRange);
+    syncUrl(selectedCategory, sort, nextRange, selectedBrands, selectedBoardTypes, selectedCapacities);
     applyQuery(selectedCategory, 1, sort, nextRange, selectedBrands, selectedBoardTypes, selectedCapacities);
   };
 
@@ -234,6 +353,7 @@ export default function ProductCatalog({
     setSort('default');
     setPriceRange(defaultRange);
     setMobileFilterOpen(false);
+    syncUrl(selectedCategory, 'default', defaultRange, [], [], []);
     applyQuery(selectedCategory, 1, 'default', defaultRange, [], [], []);
   };
 
