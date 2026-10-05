@@ -58,7 +58,7 @@ export default function Navbar() {
                             </button>
                             <div className="absolute top-full right-0 pt-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                                 <div className="bg-offwhite-50 rounded-2xl shadow-xl py-4 px-6 w-56 space-y-3 text-sm">
-                                    <Link href="/services" className="block hover:text-blue-600 py-1">All Products</Link>
+                                    <Link href="/products" className="block hover:text-blue-600 py-1">All Products</Link>
                                 </div>
                             </div>
                         </div>
