@@ -1,13 +1,39 @@
 import ProductCatalog from '@/components/products/ProductCatalog';
-import { PRODUCT_PAGE_SIZE, fetchProducts } from '@/lib/products';
+import {
+  PRODUCT_CATEGORIES,
+  PRODUCT_PAGE_SIZE,
+  fetchProducts,
+  type ProductCategory,
+} from '@/lib/products';
 
-export default async function ProductsPage() {
-  const pageResult = fetchProducts({ page: 1, pageSize: PRODUCT_PAGE_SIZE });
+function normalizeCategory(value: string | string[] | undefined): ProductCategory {
+  const rawValue = Array.isArray(value) ? value[0] : value;
+
+  return rawValue && PRODUCT_CATEGORIES.includes(rawValue as ProductCategory)
+    ? (rawValue as ProductCategory)
+    : 'کولر گازی';
+}
+
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams?:
+    | Promise<Record<string, string | string[] | undefined>>
+    | Record<string, string | string[] | undefined>;
+}) {
+  const resolvedSearchParams =
+    searchParams && typeof (searchParams as Promise<Record<string, string | string[] | undefined>>).then === 'function'
+      ? await searchParams
+      : (searchParams ?? {});
+
+  const category = normalizeCategory(resolvedSearchParams.category);
+  const pageResult = fetchProducts({ page: 1, pageSize: PRODUCT_PAGE_SIZE, category });
 
   return (
     <ProductCatalog
       initialProducts={pageResult.items}
       initialTotal={pageResult.total}
+      initialCategory={category}
     />
   );
 }

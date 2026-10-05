@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Cards from '@/components/Cards';
 import {
   PRODUCT_CAPACITY_BY_CATEGORY,
@@ -25,6 +25,7 @@ const boardTypeLabels: Record<ProductBoardType, string> = {
 interface ProductCatalogProps {
   initialProducts: Product[];
   initialTotal: number;
+  initialCategory?: ProductCategory;
 }
 
 function formatPrice(value: number) {
@@ -41,8 +42,7 @@ function parseCategoryParam(value: string | null): ProductCategory {
     : 'کولر گازی';
 }
 
-function getInitialCatalogState() {
-  const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+function getInitialCatalogState(params: URLSearchParams) {
   const category = parseCategoryParam(params.get('category'));
   const min = Number(params.get('min') ?? PRODUCT_PRICE_RANGE[category].min);
   const max = Number(params.get('max') ?? PRODUCT_PRICE_RANGE[category].max);
@@ -126,10 +126,15 @@ function PriceRangeSlider({
 export default function ProductCatalog({
   initialProducts,
   initialTotal,
+  initialCategory = 'کولر گازی',
 }: ProductCatalogProps) {
   const router = useRouter();
-  const initialCatalogState = useMemo(() => getInitialCatalogState(), []);
-  const [selectedCategory, setSelectedCategory] = useState<ProductCategory>(initialCatalogState.category);
+  const searchParams = useSearchParams();
+  const initialCatalogState = useMemo(
+    () => getInitialCatalogState(new URLSearchParams(searchParams.toString())),
+    [searchParams],
+  );
+  const [selectedCategory, setSelectedCategory] = useState<ProductCategory>(initialCategory || initialCatalogState.category);
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [total, setTotal] = useState(initialTotal);
   const [page, setPage] = useState(1);
@@ -187,28 +192,36 @@ export default function ProductCatalog({
   };
 
   useEffect(() => {
+    const nextCatalogState = getInitialCatalogState(new URLSearchParams(searchParams.toString()));
     const hasQueryValues = Boolean(
-      initialCatalogState.category !== 'کولر گازی' ||
-        initialCatalogState.sort !== 'default' ||
-        initialCatalogState.brands.length > 0 ||
-        initialCatalogState.boardTypes.length > 0 ||
-        initialCatalogState.capacities.length > 0 ||
-        initialCatalogState.priceRange[0] !== PRODUCT_PRICE_RANGE[initialCatalogState.category].min ||
-        initialCatalogState.priceRange[1] !== PRODUCT_PRICE_RANGE[initialCatalogState.category].max,
+      nextCatalogState.category !== 'کولر گازی' ||
+        nextCatalogState.sort !== 'default' ||
+        nextCatalogState.brands.length > 0 ||
+        nextCatalogState.boardTypes.length > 0 ||
+        nextCatalogState.capacities.length > 0 ||
+        nextCatalogState.priceRange[0] !== PRODUCT_PRICE_RANGE[nextCatalogState.category].min ||
+        nextCatalogState.priceRange[1] !== PRODUCT_PRICE_RANGE[nextCatalogState.category].max,
     );
+
+    setSelectedCategory(nextCatalogState.category);
+    setSort(nextCatalogState.sort);
+    setSelectedBrands(nextCatalogState.brands);
+    setSelectedBoardTypes(nextCatalogState.boardTypes);
+    setSelectedCapacities(nextCatalogState.capacities);
+    setPriceRange(nextCatalogState.priceRange);
 
     if (hasQueryValues) {
       applyQuery(
-        initialCatalogState.category,
+        nextCatalogState.category,
         1,
-        initialCatalogState.sort,
-        initialCatalogState.priceRange,
-        initialCatalogState.brands,
-        initialCatalogState.boardTypes,
-        initialCatalogState.capacities,
+        nextCatalogState.sort,
+        nextCatalogState.priceRange,
+        nextCatalogState.brands,
+        nextCatalogState.boardTypes,
+        nextCatalogState.capacities,
       );
     }
-  }, []);
+  }, [searchParams]);
 
   const availableBrands = useMemo(
     () => PRODUCT_BRANDS_BY_CATEGORY[selectedCategory],
