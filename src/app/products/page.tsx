@@ -6,6 +6,8 @@ import {
   type ProductCategory,
 } from '@/lib/products';
 
+type ProductSearchParams = Record<string, string | string[] | undefined>;
+
 function normalizeCategory(value: string | string[] | undefined): ProductCategory {
   const rawValue = Array.isArray(value) ? value[0] : value;
 
@@ -17,15 +19,9 @@ function normalizeCategory(value: string | string[] | undefined): ProductCategor
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams?:
-    | Promise<Record<string, string | string[] | undefined>>
-    | Record<string, string | string[] | undefined>;
+  searchParams?: ProductSearchParams | Promise<ProductSearchParams>;
 }) {
-  const resolvedSearchParams =
-    searchParams && typeof (searchParams as Promise<Record<string, string | string[] | undefined>>).then === 'function'
-      ? await searchParams
-      : (searchParams ?? {});
-
+  const resolvedSearchParams = (await searchParams) ?? {};
   const category = normalizeCategory(resolvedSearchParams.category);
   const pageResult = fetchProducts({ page: 1, pageSize: PRODUCT_PAGE_SIZE, category });
 
