@@ -15,7 +15,13 @@ export default function Hero() {
                             و قیمتی منصفانه، تلاش می‌کنیم تجربه‌ای مطمئن و رضایت‌بخش برای شما فراهم کنیم.
                         </p>
                     </div>
-                    <div className="w-full h-48 sm:h-60 md:h-80 bg-gray-200 rounded-2xl" />
+                    <div className="w-full h-48 sm:h-60 md:h-80 rounded-2xl overflow-hidden">
+                        <img
+                            src="/images/HeroAC.webp"
+                            alt="کولر گازی"
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
                 </div>
 
                 {/* Row 2: Centered CTA */}

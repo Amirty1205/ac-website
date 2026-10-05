@@ -1,72 +1,14 @@
-import Cards
+import ProductCatalog from '@/components/products/ProductCatalog';
+import { PRODUCT_PAGE_SIZE, fetchProducts } from '@/lib/products';
 
-    from "@/components/Cards"
+export default async function ProductsPage() {
+  const pageResult = fetchProducts({ page: 1, pageSize: PRODUCT_PAGE_SIZE });
 
-
-export default function ProductsPage() {
-
-    const dummyProducts = [
-        {
-            id: '1',
-            isProduct: true,
-            title: 'کولر گازی اسپلیت مدل A220c',
-            image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=400&fit=crop',
-            imageAlt: "",
-            price: 10000000,
-            cardDesc: 'بنیبیسد دنمبدن دسنمید یدنسشمید یدنسمدین یدنسشمدن ددیبن ثبهعید دبیسدنب دنبیسدنب دلدتقلق تدلتقم سلم خحدنبب دبنیمبدشبشنیدب دبین دبند پبنم',
-            originalPrice: 12000000,
-            rating: 3.2,
-        }, {
-            id: '2',
-            isProduct: true,
-            title: 'کولر گازی اسپلیت مدل A220c',
-            image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=400&fit=crop',
-            imageAlt: "",
-            price: 10000000,
-            cardDesc: 'بنیبیسد دنمبدن دسنمید یدنسشمید یدنسمدین یدنسشمدن ددیبن ثبهعید دبیسدنب دنبیسدنب دلدتقلق تدلتقم سلم خحدنبب دبنیمبدشبشنیدب دبین دبند پبنم',
-            originalPrice: 12000000,
-            rating: 3.2,
-        }, {
-            id: '3',
-            isProduct: true,
-            title: 'کولر گازی اسپلیت مدل A220c',
-            image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=400&fit=crop',
-            imageAlt: "",
-            price: 10000000,
-            cardDesc: 'بنیبیسد دنمبدن دسنمید یدنسشمید یدنسمدین یدنسشمدن ددیبن ثبهعید دبیسدنب دنبیسدنب دلدتقلق تدلتقم سلم خحدنبب دبنیمبدشبشنیدب دبین دبند پبنم',
-            originalPrice: 12000000,
-            rating: 3.2,
-        }, {
-            id: '4',
-            isProduct: true,
-            title: 'کولر گازی اسپلیت مدل A220c',
-            image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=400&fit=crop',
-            imageAlt: "",
-            price: 10000000,
-            cardDesc: 'بنیبیسد دنمبدن دسنمید یدنسشمید یدنسمدین یدنسشمدن ددیبن ثبهعید دبیسدنب دنبیسدنب دلدتقلق تدلتقم سلم خحدنبب دبنیمبدشبشنیدب دبین دبند پبنم',
-            rating: 3.2,
-        },
-    ];
-
-
-    return (
-        <div className="sm:mx-5 md:mx-10 lg:mx-53 py-20">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-sm:gap-2">
-                {
-                    dummyProducts.map((product) => (
-                        <Cards
-                            key={product.id}
-                            isProduct={product.isProduct}
-                            imageAlt={product.imageAlt}
-                            cardTitle={product.title}
-                            cardDesc={product.cardDesc}
-                            originalPrice={product.originalPrice}
-                            price={product.price}
-                        />
-                    ))
-                }
-            </div>
-        </div>
-    )
+  return (
+    <ProductCatalog
+      initialProducts={pageResult.items}
+      initialTotal={pageResult.total}
+    />
+  );
 }
 
