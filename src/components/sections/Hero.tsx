@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { CTAButton } from "../CTAbutton";
 import SmartSelectionModal from "../SmartSelectionModal";
@@ -23,11 +24,14 @@ export default function Hero() {
                                 و قیمتی منصفانه، تلاش می‌کنیم تجربه‌ای مطمئن و رضایت‌بخش برای شما فراهم کنیم.
                             </p>
                         </div>
-                        <div className="w-full h-48 sm:h-60 md:h-80 rounded-2xl overflow-hidden">
-                            <img
+                        <div className="relative w-full h-48 sm:h-60 md:h-80 rounded-2xl overflow-hidden">
+                            <Image
                                 src="/images/HeroAC.webp"
                                 alt="کولر گازی"
-                                className="w-full h-full object-cover"
+                                fill
+                                className="object-cover"
+                                priority
+                                sizes="(max-width: 768px) 100vw, 50vw"
                             />
                         </div>
                     </div>

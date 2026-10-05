@@ -165,7 +165,7 @@ export default function SmartSelectionModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
       <div className="relative w-full max-w-xl rounded-[28px] bg-white p-5 shadow-2xl ring-1 ring-slate-200 sm:p-6">
         <button
           type="button"
