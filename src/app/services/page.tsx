@@ -139,7 +139,7 @@ export default function ServicesPage() {
             خدمات تخصصی ما
           </p>
 
-          <h2 className="text-3xl font-black leading-[1.5] text-gray-900 sm:text-4xl">
+          <h2 className="text-3xl font-black leading-normal text-gray-900 sm:text-4xl">
             راهکار مناسب، از شناخت نیاز شروع می‌شود
           </h2>
 
@@ -225,9 +225,9 @@ export default function ServicesPage() {
 
       {/* Closing CTA */}
       <section className="mx-auto max-w-7xl px-5 pb-20 sm:px-8 lg:px-12">
-        <div className="relative overflow-hidden rounded-[2rem] bg-brand-main px-7 py-12 text-white sm:px-12 sm:py-16 lg:px-16">
+        <div className="relative overflow-hidden rounded-4xl bg-brand-main px-7 py-12 text-white sm:px-12 sm:py-16 lg:px-16">
           <div className="relative z-10 max-w-2xl">
-            <h2 className="text-3xl font-black leading-[1.5] sm:text-4xl">
+            <h2 className="text-3xl font-black leading-normal sm:text-4xl">
               برای انتخاب راهکار مناسب
               <br />
               با ما مشورت کنید.
