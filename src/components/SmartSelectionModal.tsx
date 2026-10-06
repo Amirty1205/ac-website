@@ -10,7 +10,6 @@ import { PRODUCT_CAPACITY_BY_CATEGORY } from '@/lib/products';
 type NeedType = 'heating' | 'cooling' | 'water';
 type HeatingClimate = 'mild' | 'normal' | 'cold' | 'very-cold';
 type CoolingClimate = 'moderate-humid' | 'hot-dry' | 'hot-humid';
-type WaterUsage = 'small' | 'medium' | 'large' | 'heavy';
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -29,7 +28,6 @@ const COOLING_COEFFICIENTS: Record<CoolingClimate, number> = {
 
 const HEATING_CAPACITY_OPTIONS = PRODUCT_CAPACITY_BY_CATEGORY.پکیج;
 const COOLING_CAPACITY_OPTIONS = PRODUCT_CAPACITY_BY_CATEGORY['کولر گازی'];
-const WATER_CAPACITY_OPTIONS = PRODUCT_CAPACITY_BY_CATEGORY['تصفیه آب'];
 
 function getNearestCapacity(options: number[], needed: number) {
   return options.reduce((best, option) =>
@@ -68,16 +66,11 @@ export default function SmartSelectionModal({
   const [need, setNeed] = useState<NeedType | null>(null);
   const [heatingClimate, setHeatingClimate] = useState<HeatingClimate>('normal');
   const [coolingClimate, setCoolingClimate] = useState<CoolingClimate>('hot-dry');
-  const [waterUsage, setWaterUsage] = useState<WaterUsage>('medium');
   const [area, setArea] = useState<number>(120);
   const [peopleCount, setPeopleCount] = useState<number>(4);
 
   useEffect(() => {
-    if (!isOpen) {
-      setCurrentStep(1);
-      setNeed(null);
-      return;
-    }
+    if (!isOpen) return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -262,7 +255,6 @@ export default function SmartSelectionModal({
                 key={option.key}
                 type="button"
                 onClick={() => {
-                  setWaterUsage(option.key as WaterUsage);
                   setPeopleCount(option.value);
                   nextStep();
                 }}
