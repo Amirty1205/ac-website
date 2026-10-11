@@ -39,7 +39,7 @@ function parseListParam(value: string | null): string[] {
 function parseCategoryParam(value: string | null): ProductCategory {
   return PRODUCT_CATEGORIES.includes(value as ProductCategory)
     ? (value as ProductCategory)
-    : 'کولر گازی';
+    : 'air-conditioner';
 }
 
 type CatalogState = {
@@ -52,7 +52,7 @@ type CatalogState = {
   capacities: number[];
 };
 
-function getInitialCatalogState(params: URLSearchParams, fallbackCategory: ProductCategory = 'کولر گازی'): CatalogState {
+function getInitialCatalogState(params: URLSearchParams, fallbackCategory: ProductCategory = 'air-conditioner'): CatalogState {
   const category = parseCategoryParam(params.get('category') ?? fallbackCategory);
   const min = Number(params.get('min') ?? PRODUCT_PRICE_RANGE[category].min);
   const max = Number(params.get('max') ?? PRODUCT_PRICE_RANGE[category].max);
@@ -140,12 +140,12 @@ function PriceRangeSlider({
 export default function ProductCatalog({
   initialProducts,
   initialTotal,
-  initialCategory = 'کولر گازی',
+  initialCategory = 'air-conditioner',
 }: ProductCatalogProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const defaultCategory = initialCategory || 'کولر گازی';
+  const defaultCategory = initialCategory || 'air-conditioner';
   const catalogState = useMemo(
     () => getInitialCatalogState(new URLSearchParams(searchParams.toString()), defaultCategory),
     [defaultCategory, searchParams],
@@ -276,7 +276,7 @@ export default function ProductCatalog({
     [selectedCategory],
   );
 
-  const isWaterCategory = selectedCategory === 'تصفیه آب';
+  const isWaterCategory = selectedCategory === 'water-purifier';
   const hasBoardTypeFilter = !isWaterCategory;
   const hasCapacityFilter = !isWaterCategory;
 

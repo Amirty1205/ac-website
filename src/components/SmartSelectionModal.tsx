@@ -178,7 +178,7 @@ export default function SmartSelectionModal({
           <div className="grid gap-3 sm:grid-cols-3">
             {[
               { key: 'heating', label: 'گرمایش', description: 'پکیج و سیستم گرمایشی' },
-              { key: 'cooling', label: 'سرمایش', description: 'کولر گازی و HVAC' },
+              { key: 'cooling', label: 'سرمایش', description: 'کولر گازی و air-conditioner' },
               { key: 'water', label: 'تصفیه آب', description: 'دستگاه‌های آب' },
             ].map((option) => (
               <button

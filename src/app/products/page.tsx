@@ -1,36 +1,37 @@
 import ProductCatalog from '@/components/products/ProductCatalog';
-import {
-  PRODUCT_CATEGORIES,
-  PRODUCT_PAGE_SIZE,
-  fetchProducts,
-  type ProductCategory,
-} from '@/lib/products';
+import { getProductsFromApi } from '@/lib/api';
+import type { Product, ProductCategory } from '@/lib/products';
 
-type ProductSearchParams = Record<string, string | string[] | undefined>;
+export default async function ProductsPage() {
+  const apiProducts = await getProductsFromApi();
 
-function normalizeCategory(value: string | string[] | undefined): ProductCategory {
-  const rawValue = Array.isArray(value) ? value[0] : value;
+  const products: Product[] = apiProducts
+    .filter((product) => product.active)
+    .map((product) => ({
+      id: String(product.id),
+      isProduct: true,
+      category: product.category as ProductCategory,
+      title: product.name,
+      image: product.imageUrl || '',
+      imageAlt: product.name,
+      price: product.price,
+      cardDesc: product.description || `${product.brand} — ${product.name}`,
+      originalPrice: product.originalPrice ?? product.price,
+      rating: product.rating ?? 0,
+      brand: product.brand,
+      boardType:
+        product.boardType === 'fixed-speed' ? 'fixed-speed' : 'inverter',
+      capacity: product.capacity ?? 12000,
+      sales: product.sales ?? 0,
+      views: product.views ?? 0,
+    }));
 
-  return rawValue && PRODUCT_CATEGORIES.includes(rawValue as ProductCategory)
-    ? (rawValue as ProductCategory)
-    : 'کولر گازی';
-}
-
-export default async function ProductsPage({
-  searchParams,
-}: {
-  searchParams?: ProductSearchParams | Promise<ProductSearchParams>;
-}) {
-  const resolvedSearchParams = (await searchParams) ?? {};
-  const category = normalizeCategory(resolvedSearchParams.category);
-  const pageResult = fetchProducts({ page: 1, pageSize: PRODUCT_PAGE_SIZE, category });
 
   return (
     <ProductCatalog
-      initialProducts={pageResult.items}
-      initialTotal={pageResult.total}
-      initialCategory={category}
+      initialProducts={products}
+      initialTotal={products.length}
+      initialCategory="air-conditioner"
     />
   );
 }
-

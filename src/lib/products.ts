@@ -1,5 +1,5 @@
 export type ProductBoardType = "inverter" | "fixed-speed";
-export type ProductCategory = "کولر گازی" | "پکیج" | "تصفیه آب";
+export type ProductCategory = "air-conditioner" | "boiler" | "water-purifier";
 export type ProductSortMode =
     | "default"
     | "cheapest"
@@ -36,24 +36,24 @@ export interface ProductFilters {
 
 export const PRODUCT_PAGE_SIZE = 12;
 
-export const PRODUCT_CATEGORIES = ["کولر گازی", "پکیج", "تصفیه آب"] as const;
+export const PRODUCT_CATEGORIES = ["air-conditioner", "boiler", "water-purifier"] as const;
 
 export const PRODUCT_PRICE_RANGE: Record<ProductCategory, { min: number; max: number }> = {
-    "کولر گازی": { min: 20000000, max: 100000000 },
-    پکیج: { min: 30000000, max: 180000000 },
-    "تصفیه آب": { min: 5000000, max: 50000000 },
+    "air-conditioner": { min: 20000000, max: 100000000 },
+    boiler: { min: 30000000, max: 180000000 },
+    "water-purifier": { min: 5000000, max: 50000000 },
 };
 
 export const PRODUCT_BRANDS_BY_CATEGORY: Record<ProductCategory, string[]> = {
-    "کولر گازی": ["گری", "ایران رادیاتور", "جنرال گلد", "هایسنس", "ال جی", "سامسونگ"],
-    پکیج: ["گری", "ایران رادیاتور", "جنرال گلد", "هایسنس", "ال جی", "سامسونگ"],
-    "تصفیه آب": ["آب طلایی", "آبسرد", "پارس آب", "هیراد", "نیکان", "پالایش"],
+    "air-conditioner": ["گری", "ایران رادیاتور", "جنرال گلد", "هایسنس", "ال جی", "سامسونگ"],
+    boiler: ["گری", "ایران رادیاتور", "جنرال گلد", "هایسنس", "ال جی", "سامسونگ"],
+    "water-purifier": ["آب طلایی", "آبسرد", "پارس آب", "هیراد", "نیکان", "پالایش"],
 };
 
 export const PRODUCT_CAPACITY_BY_CATEGORY: Record<ProductCategory, number[]> = {
-    "کولر گازی": [12000, 18000, 24000, 30000, 36000],
-    پکیج: [18000, 24000, 30000, 42000],
-    "تصفیه آب": [60, 120, 180, 240],
+    "air-conditioner": [12000, 18000, 24000, 30000, 36000],
+    boiler: [18000, 24000, 30000, 42000],
+    "water-purifier": [60, 120, 180, 240],
 };
 
 export const PRODUCT_SORT_OPTIONS: Array<{ value: ProductSortMode; label: string }> = [
@@ -97,8 +97,8 @@ function buildProduct({
         brand,
         price,
         cardDesc:
-            category === "تصفیه آب"
-                ? `${brand} ${title} با ظرفیت ${capacity} لیتری و عملکرد تصفیه سریع، مناسب خانه و محیط‌های اداری.`
+            category === "water-purifier"
+                ? `${brand} ${title} با ظرفیت ${capacity} لیتری و عملکرد water-purifierیع، مناسب خانه و محیط‌های اداری.`
                 : `${title} با ظرفیت ${capacity} و عملکرد ${boardType === "inverter" ? "اینورتر" : "دور ثابت"} مناسب برای استفاده روزمره و مصرف انرژی بهینه.`,
         image,
         imageAlt: title,
@@ -131,8 +131,8 @@ const airConditioners: Product[] = airConditionerBrands.flatMap((brand, brandInd
 
         return buildProduct({
             id: `ac-${brandIndex + 1}-${capacity}`,
-            category: "کولر گازی",
-            title: `کولر گازی اسپلیت ${capacity} ${brand}`,
+            category: "air-conditioner",
+            title: `air-conditioner اسپلیت ${capacity} ${brand}`,
             brand,
             price: productPrice,
             capacity,
@@ -156,8 +156,8 @@ const packages: Product[] = packageBrands.flatMap((brand, brandIndex) =>
 
         return buildProduct({
             id: `pkg-${brandIndex + 1}-${capacity}`,
-            category: "پکیج",
-            title: `پکیج ${capacity} ${brand}`,
+            category: "boiler",
+            title: `boiler ${capacity} ${brand}`,
             brand,
             price: productPrice,
             capacity,
@@ -181,8 +181,8 @@ const waterPurifiers: Product[] = purifierBrands.flatMap((brand, brandIndex) =>
 
         return buildProduct({
             id: `water-${brandIndex + 1}-${capacity}`,
-            category: "تصفیه آب",
-            title: `تصفیه آب ${capacity} لیتری ${brand}`,
+            category: "water-purifier",
+            title: `water-purifier ${capacity} لیتری ${brand}`,
             brand,
             price: productPrice,
             capacity,
@@ -209,7 +209,7 @@ export function getFeaturedProducts(limit = 8): Product[] {
 export function getProductsPage({
     page = 1,
     pageSize = PRODUCT_PAGE_SIZE,
-    category = "کولر گازی",
+    category = "air-conditioner",
     filters = {},
     sort = "default",
 }: {

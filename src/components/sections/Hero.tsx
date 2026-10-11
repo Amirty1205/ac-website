@@ -26,10 +26,10 @@ export default function Hero() {
                         </div>
                         <div className="relative w-full h-48 sm:h-60 md:h-80 rounded-2xl overflow-hidden">
                             <Image
-                                src="/images/HeroAC.webp"
+                                src="/images/DARAB.webp"
                                 alt="کولر گازی"
                                 fill
-                                className="object-cover"
+                                className="object-cover scale-x-[-1]"
                                 priority
                                 sizes="(max-width: 768px) 100vw, 50vw"
                             />
