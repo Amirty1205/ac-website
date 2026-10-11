@@ -26,8 +26,9 @@ const COOLING_COEFFICIENTS: Record<CoolingClimate, number> = {
   'hot-humid': 700,
 };
 
-const HEATING_CAPACITY_OPTIONS = PRODUCT_CAPACITY_BY_CATEGORY.پکیج;
-const COOLING_CAPACITY_OPTIONS = PRODUCT_CAPACITY_BY_CATEGORY['کولر گازی'];
+const HEATING_CAPACITY_OPTIONS = PRODUCT_CAPACITY_BY_CATEGORY.boiler;
+const COOLING_CAPACITY_OPTIONS =
+  PRODUCT_CAPACITY_BY_CATEGORY['air-conditioner'];
 
 function getNearestCapacity(options: number[], needed: number) {
   return options.reduce((best, option) =>
@@ -118,19 +119,19 @@ export default function SmartSelectionModal({
 
     if (need === 'heating') {
       const selectedCapacity = buildHeatingCapacity(area, heatingClimate);
-      params.set('category', 'پکیج');
+      params.set('category', 'boiler');
       params.set('capacity', String(selectedCapacity));
     }
 
     if (need === 'cooling') {
       const selectedCapacity = buildCoolingCapacity(area, coolingClimate);
-      params.set('category', 'کولر گازی');
+      params.set('category', 'air-conditioner');
       params.set('capacity', String(selectedCapacity));
     }
 
     if (need === 'water') {
       const selectedCapacity = buildWaterCapacity(peopleCount);
-      params.set('category', 'تصفیه آب');
+      params.set('category', 'water-purifier');
       params.set('capacity', String(selectedCapacity));
     }
 
