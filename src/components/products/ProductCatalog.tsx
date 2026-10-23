@@ -4,16 +4,20 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Cards from '@/components/Cards';
 import {
+  getProductFilterOptionsFromApi,
+  getProductsFromApi,
+  type ApiProduct,
+  type ApiProductFilterMetadata,
+} from '@/lib/api';
+import {
   PRODUCT_CAPACITY_BY_CATEGORY,
   PRODUCT_CATEGORIES,
   PRODUCT_PRICE_RANGE,
   PRODUCT_SORT_OPTIONS,
   PRODUCT_BRANDS_BY_CATEGORY,
-  fetchProducts,
   type Product,
   type ProductBoardType,
   type ProductCategory,
-  type ProductFilters,
   type ProductSortMode,
 } from '@/lib/products';
 
@@ -21,6 +25,31 @@ const boardTypeLabels: Record<ProductBoardType, string> = {
   inverter: 'اینورتر',
   'fixed-speed': 'دور ثابت',
 };
+
+const categoryLabels: Record<ProductCategory, string> = {
+  'air-conditioner': 'کولر گازی',
+  boiler: 'پکیج',
+  'water-purifier': 'دستگاه تصفیه آب',
+};
+
+const fallbackFilterMetadata: ApiProductFilterMetadata = {
+  categories: PRODUCT_CATEGORIES.map((category) => ({
+    value: category,
+    label: categoryLabels[category],
+  })),
+  priceRangeByCategory: PRODUCT_PRICE_RANGE,
+  brandsByCategory: PRODUCT_BRANDS_BY_CATEGORY,
+  capacitiesByCategory: PRODUCT_CAPACITY_BY_CATEGORY,
+  boardTypesByCategory: {
+    'air-conditioner': ['inverter', 'fixed-speed'],
+    boiler: ['inverter', 'fixed-speed'],
+    'water-purifier': ['inverter', 'fixed-speed'],
+  },
+};
+
+function getCategoryRange(category: ProductCategory, metadata: ApiProductFilterMetadata) {
+  return metadata.priceRangeByCategory[category] ?? PRODUCT_PRICE_RANGE[category];
+}
 
 interface ProductCatalogProps {
   initialProducts: Product[];
@@ -52,13 +81,18 @@ type CatalogState = {
   capacities: number[];
 };
 
-function getInitialCatalogState(params: URLSearchParams, fallbackCategory: ProductCategory = 'air-conditioner'): CatalogState {
+function getInitialCatalogState(
+  params: URLSearchParams,
+  metadata: ApiProductFilterMetadata,
+  fallbackCategory: ProductCategory = 'air-conditioner',
+): CatalogState {
   const category = parseCategoryParam(params.get('category') ?? fallbackCategory);
-  const min = Number(params.get('min') ?? PRODUCT_PRICE_RANGE[category].min);
-  const max = Number(params.get('max') ?? PRODUCT_PRICE_RANGE[category].max);
+  const categoryRange = getCategoryRange(category, metadata);
+  const min = Number(params.get('min') ?? categoryRange.min);
+  const max = Number(params.get('max') ?? categoryRange.max);
   const priceRange: [number, number] = [
-    Number.isFinite(min) ? min : PRODUCT_PRICE_RANGE[category].min,
-    Number.isFinite(max) ? max : PRODUCT_PRICE_RANGE[category].max,
+    Number.isFinite(min) ? min : categoryRange.min,
+    Number.isFinite(max) ? max : categoryRange.max,
   ];
   const pageValue = Number(params.get('page') ?? 1);
 
@@ -72,6 +106,26 @@ function getInitialCatalogState(params: URLSearchParams, fallbackCategory: Produ
     brands: parseListParam(params.get('brand')),
     boardTypes: parseListParam(params.get('board')) as ProductBoardType[],
     capacities: parseListParam(params.get('capacity')).map(Number).filter((item) => Number.isFinite(item)),
+  };
+}
+
+function mapApiProductToCatalogProduct(product: ApiProduct): Product {
+  return {
+    id: String(product.id),
+    isProduct: true,
+    category: product.category as ProductCategory,
+    title: product.name,
+    image: product.imageUrl || '',
+    imageAlt: product.name,
+    price: product.price,
+    cardDesc: product.description || `${product.brand} — ${product.name}`,
+    originalPrice: product.originalPrice ?? product.price,
+    rating: product.rating ?? 0,
+    brand: product.brand,
+    boardType: product.boardType === 'fixed-speed' ? 'fixed-speed' : 'inverter',
+    capacity: product.capacity ?? 12000,
+    sales: product.sales ?? 0,
+    views: product.views ?? 0,
   };
 }
 
@@ -146,9 +200,34 @@ export default function ProductCatalog({
   const searchParams = useSearchParams();
 
   const defaultCategory = initialCategory || 'air-conditioner';
+  const [filterMetadata, setFilterMetadata] = useState<ApiProductFilterMetadata>(fallbackFilterMetadata);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadMetadata = async () => {
+      try {
+        const metadata = await getProductFilterOptionsFromApi();
+        if (!ignore) {
+          setFilterMetadata(metadata);
+        }
+      } catch {
+        if (!ignore) {
+          setFilterMetadata(fallbackFilterMetadata);
+        }
+      }
+    };
+
+    loadMetadata();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   const catalogState = useMemo(
-    () => getInitialCatalogState(new URLSearchParams(searchParams.toString()), defaultCategory),
-    [defaultCategory, searchParams],
+    () => getInitialCatalogState(new URLSearchParams(searchParams.toString()), filterMetadata, defaultCategory),
+    [defaultCategory, filterMetadata, searchParams],
   );
 
   const selectedCategory = catalogState.category;
@@ -162,6 +241,16 @@ export default function ProductCatalog({
   const [mobileSortOpen, setMobileSortOpen] = useState(false);
   const [draftPriceRange, setDraftPriceRange] = useState<[number, number]>(priceRange);
   const [isPriceRangeDragging, setIsPriceRangeDragging] = useState(false);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [total, setTotal] = useState<number>(initialTotal);
+  const [pageInfo, setPageInfo] = useState({
+    page,
+    pageSize: 12,
+    totalPages: 1,
+    hasNext: false,
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const priceRangeDebounceRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -171,6 +260,70 @@ export default function ProductCatalog({
       }
     };
   }, []);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const fetchProducts = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await getProductsFromApi({
+          category: selectedCategory,
+          page,
+          pageSize: 12,
+          sort: sort === 'default' ? undefined : sort,
+          min: priceRange[0],
+          max: priceRange[1],
+          brand: selectedBrands.join(','),
+          board: selectedBoardTypes.join(','),
+          capacity: selectedCapacities.join(','),
+        });
+
+        if (ignore) {
+          return;
+        }
+
+        setProducts(response.items.filter((item) => item.active).map(mapApiProductToCatalogProduct));
+        setTotal(response.totalElements);
+        setPageInfo({
+          page: response.page,
+          pageSize: response.pageSize,
+          totalPages: response.totalPages,
+          hasNext: response.hasNext,
+        });
+      } catch (caughtError) {
+        if (ignore) {
+          return;
+        }
+
+        const message = caughtError instanceof Error
+          ? caughtError.message
+          : 'Failed to load products from the backend.';
+
+        setProducts([]);
+        setTotal(0);
+        setPageInfo({
+          page,
+          pageSize: 12,
+          totalPages: 1,
+          hasNext: false,
+        });
+        setError(message);
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchProducts();
+
+    return () => {
+      ignore = true;
+    };
+  }, [page, priceRange[0], priceRange[1], selectedBrands.join(','), selectedBoardTypes.join(','), selectedCapacities.join(','), selectedCategory, sort]);
 
   const displayedPriceRange =
     isPriceRangeDragging ||
@@ -197,8 +350,8 @@ export default function ProductCatalog({
       params.set('sort', mergedState.sort);
     }
 
-    const defaultMin = PRODUCT_PRICE_RANGE[mergedState.category].min;
-    const defaultMax = PRODUCT_PRICE_RANGE[mergedState.category].max;
+    const defaultMin = getCategoryRange(mergedState.category, filterMetadata).min;
+    const defaultMax = getCategoryRange(mergedState.category, filterMetadata).max;
 
     if (mergedState.priceRange[0] !== defaultMin) {
       params.set('min', String(mergedState.priceRange[0]));
@@ -226,6 +379,8 @@ export default function ProductCatalog({
     router.replace(targetUrl, { scroll: false });
   };
 
+  const currentCategoryRange = getCategoryRange(selectedCategory, filterMetadata);
+
   const isDefaultCatalogState =
     selectedCategory === defaultCategory &&
     sort === 'default' &&
@@ -233,64 +388,36 @@ export default function ProductCatalog({
     selectedBoardTypes.length === 0 &&
     selectedCapacities.length === 0 &&
     page === 1 &&
-    priceRange[0] === PRODUCT_PRICE_RANGE[defaultCategory].min &&
-    priceRange[1] === PRODUCT_PRICE_RANGE[defaultCategory].max;
-
-  const productResult = useMemo(() => {
-    if (isDefaultCatalogState) {
-      return {
-        items: initialProducts,
-        total: initialTotal,
-        page,
-      };
-    }
-
-    const filters: ProductFilters = {
-      category: selectedCategory,
-      minPrice: priceRange[0],
-      maxPrice: priceRange[1],
-      brands: selectedBrands,
-      boardTypes: selectedBoardTypes,
-      capacities: selectedCapacities,
-    };
-
-    return fetchProducts({
-      category: selectedCategory,
-      page,
-      pageSize: 12,
-      filters,
-      sort,
-    });
-  }, [initialProducts, initialTotal, isDefaultCatalogState, page, priceRange, selectedBoardTypes, selectedBrands, selectedCapacities, selectedCategory, sort]);
-
-  const products = productResult.items;
-  const total = productResult.total;
+    priceRange[0] === getCategoryRange(defaultCategory, filterMetadata).min &&
+    priceRange[1] === getCategoryRange(defaultCategory, filterMetadata).max;
 
   const availableBrands = useMemo(
-    () => PRODUCT_BRANDS_BY_CATEGORY[selectedCategory],
-    [selectedCategory],
+    () => filterMetadata.brandsByCategory[selectedCategory] ?? PRODUCT_BRANDS_BY_CATEGORY[selectedCategory] ?? [],
+    [filterMetadata, selectedCategory],
   );
 
   const availableCapacities = useMemo(
-    () => PRODUCT_CAPACITY_BY_CATEGORY[selectedCategory],
-    [selectedCategory],
+    () => filterMetadata.capacitiesByCategory[selectedCategory] ?? PRODUCT_CAPACITY_BY_CATEGORY[selectedCategory] ?? [],
+    [filterMetadata, selectedCategory],
   );
 
   const isWaterCategory = selectedCategory === 'water-purifier';
   const hasBoardTypeFilter = !isWaterCategory;
   const hasCapacityFilter = !isWaterCategory;
 
+  const defaultRangeForSelectedCategory = getCategoryRange(selectedCategory, filterMetadata);
+
   const activeFilterCount =
     Number(selectedCategory !== defaultCategory) +
     Number(selectedBrands.length > 0) +
     Number(selectedBoardTypes.length > 0) +
     Number(selectedCapacities.length > 0) +
-    Number(priceRange[0] !== PRODUCT_PRICE_RANGE[selectedCategory].min || priceRange[1] !== PRODUCT_PRICE_RANGE[selectedCategory].max);
+    Number(priceRange[0] !== defaultRangeForSelectedCategory.min || priceRange[1] !== defaultRangeForSelectedCategory.max);
 
   const changeCategory = (category: ProductCategory) => {
     const nextRange: [number, number] = [
-      PRODUCT_PRICE_RANGE[category].min,
-      PRODUCT_PRICE_RANGE[category].max,
+      getCategoryRange(category, filterMetadata).min,
+      getCategoryRange(category, filterMetadata).max,
     ];
 
     setMobileFilterOpen(false);
@@ -357,8 +484,8 @@ export default function ProductCatalog({
 
   const resetFilters = () => {
     const defaultRange: [number, number] = [
-      PRODUCT_PRICE_RANGE[selectedCategory].min,
-      PRODUCT_PRICE_RANGE[selectedCategory].max,
+      currentCategoryRange.min,
+      currentCategoryRange.max,
     ];
 
     setMobileFilterOpen(false);
@@ -374,8 +501,12 @@ export default function ProductCatalog({
     });
   };
 
-  const totalPages = Math.max(1, Math.ceil(total / 12));
-  const pageTitle = `همه ${selectedCategory} ها`;
+  const currentPage = pageInfo.page || page;
+  const totalPages = Math.max(1, pageInfo.totalPages || 1);
+  const categoryOptions = filterMetadata.categories.length > 0
+    ? filterMetadata.categories
+    : PRODUCT_CATEGORIES.map((category) => ({ value: category, label: categoryLabels[category] }));
+  const pageTitle = `همه ${categoryLabels[selectedCategory] || selectedCategory} ها`;
 
   const renderFilterPanel = () => (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -395,28 +526,31 @@ export default function ProductCatalog({
       <div className="mb-6">
         <p className="mb-3 text-sm font-semibold text-slate-700">دسته‌بندی</p>
         <div className="flex flex-wrap gap-2">
-          {PRODUCT_CATEGORIES.map((category) => (
-            <button
-              key={category}
-              type="button"
-              onClick={() => changeCategory(category)}
-              className={`rounded-full border px-3 py-2 text-xs transition ${
-                selectedCategory === category
-                  ? 'border-brand-main bg-brand-main text-white'
-                  : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-brand-main hover:text-brand-main'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
+          {categoryOptions.map((categoryOption) => {
+            const category = categoryOption.value as ProductCategory;
+            return (
+              <button
+                key={category}
+                type="button"
+                onClick={() => changeCategory(category)}
+                className={`rounded-full border px-3 py-2 text-xs transition ${
+                  selectedCategory === category
+                    ? 'border-brand-main bg-brand-main text-white'
+                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-brand-main hover:text-brand-main'
+                }`}
+              >
+                {categoryOption.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       <div className="mb-6">
         <p className="mb-3 text-sm font-semibold text-slate-700">قیمت</p>
         <PriceRangeSlider
-          min={PRODUCT_PRICE_RANGE[selectedCategory].min}
-          max={PRODUCT_PRICE_RANGE[selectedCategory].max}
+          min={currentCategoryRange.min}
+          max={currentCategoryRange.max}
           value={displayedPriceRange}
           onChange={handlePriceRangeChange}
         />
@@ -571,26 +705,46 @@ export default function ProductCatalog({
             ))}
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {products.map((product) => (
-              <Cards
-                key={product.id}
-                isProduct={product.isProduct}
-                imageAlt={product.imageAlt}
-                cardTitle={product.title}
-                cardDesc={product.cardDesc}
-                originalPrice={product.originalPrice}
-                price={product.price}
-              />
-            ))}
-          </div>
+          {loading && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-600">
+              در حال بارگذاری محصولات...
+            </div>
+          )}
 
-          {totalPages > 1 && (
+          {!loading && error && (
+            <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
+              خطا در دریافت محصولات: {error}
+            </div>
+          )}
+
+          {!loading && !error && products.length === 0 && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-600">
+              هیچ محصولی برای این فیلترها پیدا نشد.
+            </div>
+          )}
+
+          {!loading && !error && products.length > 0 && (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {products.map((product) => (
+                <Cards
+                  key={product.id}
+                  isProduct={product.isProduct}
+                  imageAlt={product.imageAlt}
+                  cardTitle={product.title}
+                  cardDesc={product.cardDesc}
+                  originalPrice={product.originalPrice}
+                  price={product.price}
+                />
+              ))}
+            </div>
+          )}
+
+          {!loading && !error && totalPages > 1 && products.length > 0 && (
             <div className="mt-8 flex items-center justify-center gap-2">
               <button
                 type="button"
-                onClick={() => handlePageChange(Math.max(1, page - 1))}
-                disabled={page === 1}
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
                 className="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 قبلی
@@ -602,7 +756,7 @@ export default function ProductCatalog({
                   type="button"
                   onClick={() => handlePageChange(pageNumber)}
                   className={`rounded-full px-3 py-2 text-sm ${
-                    pageNumber === page
+                    pageNumber === currentPage
                       ? 'bg-brand-main text-white'
                       : 'border border-slate-200 bg-white text-slate-700'
                   }`}
@@ -613,8 +767,8 @@ export default function ProductCatalog({
 
               <button
                 type="button"
-                onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
-                disabled={page === totalPages}
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
                 className="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 بعدی
@@ -647,3 +801,4 @@ export default function ProductCatalog({
     </div>
   );
 }
+

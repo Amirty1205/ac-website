@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getProductsFromApi } from '@/lib/api';
+import { getProductByIdFromApi, getProductsFromApi } from '@/lib/api';
 import type { ApiProduct } from '@/lib/api';
 
 const categoryLabels: Record<string, string> = {
@@ -86,39 +86,42 @@ export default async function ProductDetailsPage({
         notFound();
     }
 
-    let allProducts: ApiProduct[];
+    let product: ApiProduct;
 
     try {
-        allProducts = await getProductsFromApi();
-    } catch {
+        product = await getProductByIdFromApi(Number(id));
+    } catch (error) {
+        const err = error as Error & { status?: number };
+
+        if (err?.status === 404) {
+            notFound();
+        }
+
         throw new Error(
-            'دریافت اطلاعات محصولات ناموفق بود. اتصال بک‌اند را بررسی کنید.',
+            'دریافت اطلاعات محصول ناموفق بود. اتصال بک‌اند را بررسی کنید.',
         );
     }
 
-    const product = allProducts.find(
-        (item) => item.id === Number(id) && item.active,
-    );
-
-    if (!product) {
+    if (!product.active) {
         notFound();
     }
 
-    const relatedProducts = allProducts
-        .filter(
-            (item) =>
-                item.active &&
-                item.id !== product.id &&
-                item.category === product.category,
-        )
-        .sort((a, b) => {
-            const capacityDifference =
-                Number(a.capacity !== null && b.capacity !== null) *
-                Math.abs((a.capacity ?? 0) - (b.capacity ?? 0));
+    let relatedProducts: ApiProduct[] = [];
 
-            return capacityDifference;
-        })
-        .slice(0, 4);
+    try {
+        const relatedResponse = await getProductsFromApi({
+            category: product.category,
+            page: 1,
+            pageSize: 4,
+            sort: 'default',
+        });
+
+        relatedProducts = relatedResponse.items
+            .filter((item) => item.id !== product.id && item.active)
+            .slice(0, 4);
+    } catch {
+        relatedProducts = [];
+    }
 
     const categoryLabel =
         categoryLabels[product.category] ?? product.category;
