@@ -1,3 +1,12 @@
+<img width="1536" height="667" alt="ChatGPT Image Nov 3, 2026, 05_25_31 PM" src="https://github.com/user-attachments/assets/1dd132d4-18ed-47ad-b810-592850c5384f" />
+
+![DARAB — Homepage](./docs/images/darab-homepage.jpg)
+
+# DARAB
+
+A modern HVAC e-commerce platform designed to make choosing the right heating and cooling solution simpler.
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
